@@ -1,0 +1,307 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+
+// ===== CONFIG =====
+const CALENDLY_URL = "https://calendar.app.google/t4gPui5KZ73nzHB87"; // Google Calendar demo link
+const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbwYbdEyP3pttdIHycGsYgBP5TqDsjkpufy3AdLapvnFZ3w43kHutbJ7dZdfqLhdCE6vKQ/exec"; // Google Sheets webhook
+
+export default function NeurospearLanding() {
+  const [openForm, setOpenForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    role: "SDR/BDR",
+    painScore: 7,
+    challenge: "",
+    usageLikelihood: "Very likely",
+    features: [] as string[],
+    price: "₹3000",
+    notes: "",
+    consent: true,
+  });
+
+  const toggleFeature = (v: string) => {
+    setForm((f) => {
+      const has = f.features.includes(v);
+      return { ...f, features: has ? f.features.filter((x) => x !== v) : [...f.features, v] };
+    });
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const payload = {
+        source: "neurospear-landing",
+        ts: new Date().toISOString(),
+        ...form,
+      };
+      try { localStorage.setItem("ns_feedback", JSON.stringify(payload)); } catch {}
+
+      const res = await fetch(FORM_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Submit failed: ${res.status}`);
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err?.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-800">
+      {/* NAV */}
+      <header className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-9 rounded-2xl bg-slate-900 text-white grid place-items-center font-bold">N</div>
+          <span className="font-semibold tracking-tight">neurospear.ai</span>
+        </div>
+        <nav className="hidden sm:flex items-center gap-4">
+          <a href="#features" className="text-sm hover:underline">Features</a>
+          <a href="#how" className="text-sm hover:underline">How it works</a>
+          <a href="#feedback" className="text-sm hover:underline">Feedback</a>
+        </nav>
+        <div className="flex items-center gap-2">
+          <a href={CALENDLY_URL} target="_blank" className="px-3 py-2 rounded-xl bg-slate-900 text-white text-sm shadow hover:opacity-90">Book a demo</a>
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 pt-10 grid md:grid-cols-2 gap-8 items-center">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
+            AI Co‑Pilot for SDRs & BDMs
+          </h1>
+          <p className="mt-4 text-lg text-slate-600">
+            Cut prospect research time by <b>70%</b> and boost reply rates <b>3–5×</b> with automated research, pain‑point detection, and hyper‑personalized outreach.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button onClick={() => setOpenForm(true)} className="px-4 py-2 rounded-xl bg-slate-900 text-white shadow">Get early access</button>
+            <a href={CALENDLY_URL} target="_blank" className="px-4 py-2 rounded-xl border border-slate-300 shadow-sm">Book a demo</a>
+          </div>
+          <p className="mt-3 text-xs text-slate-500">Prototype stage • India‑first ICP • Private beta</p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="bg-white rounded-2xl shadow-xl p-4 md:p-6">
+          <div className="grid gap-3">
+            <div className="p-4 rounded-xl bg-slate-50 border">
+              <h3 className="font-semibold">Prospect Intelligence</h3>
+              <p className="text-sm text-slate-600">Company signals, news, tech stack, and intent cues aggregated in one view.</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border">
+              <h3 className="font-semibold">Pain‑point Detection</h3>
+              <p className="text-sm text-slate-600">AI infers likely challenges per account to guide talk tracks and angles.</p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border">
+              <h3 className="font-semibold">Personalized Outreach</h3>
+              <p className="text-sm text-slate-600">One‑click emails, LinkedIn messages, and call scripts tailored to each prospect.</p>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* SOCIAL PROOF / TRUST */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            { k: "70%", t: "Less research time" },
+            { k: "3–5×", t: "Higher reply rates" },
+            { k: "<10 min", t: "To first value" },
+          ].map((m) => (
+            <div key={m.t} className="rounded-2xl bg-white shadow p-6 text-center">
+              <div className="text-3xl font-extrabold">{m.k}</div>
+              <div className="text-sm text-slate-500">{m.t}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section id="features" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+        <h2 className="text-2xl font-bold">Why teams will adopt us</h2>
+        <div className="mt-6 grid md:grid-cols-3 gap-6">
+          {[
+            { h: "AI‑native from day one", p: "No retrofits. Built for SDR workflows and velocity." },
+            { h: "India‑first, global‑ready", p: "Focused ICP (SaaS, IT services) with APAC/EMEA roadmap." },
+            { h: "Integrations", p: "LinkedIn, email, and CRM connectors (roadmap)." },
+          ].map((f) => (
+            <div key={f.h} className="bg-white rounded-2xl shadow p-6">
+              <div className="font-semibold">{f.h}</div>
+              <p className="text-sm text-slate-600 mt-2">{f.p}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+        <h2 className="text-2xl font-bold">How it works</h2>
+        <ol className="mt-4 grid md:grid-cols-4 gap-4 list-decimal list-inside">
+          <li className="bg-white rounded-2xl shadow p-4">Connect LinkedIn/CRM and import a list.</li>
+          <li className="bg-white rounded-2xl shadow p-4">We auto‑research accounts & infer pain points.</li>
+          <li className="bg-white rounded-2xl shadow p-4">Generate channel‑ready outreach with variables.</li>
+          <li className="bg-white rounded-2xl shadow p-4">Track replies and iterate prompts.</li>
+        </ol>
+      </section>
+
+      {/* CTA BELT */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="rounded-2xl bg-slate-900 text-white p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <div className="text-xl font-semibold">Join the private beta</div>
+            <p className="text-sm text-slate-200">Get early access + lifetime discount for feedback contributors.</p>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setOpenForm(true)} className="px-4 py-2 rounded-xl bg-white text-slate-900">Request access</button>
+            <a href={CALENDLY_URL} target="_blank" className="px-4 py-2 rounded-xl border border-white/30">Book a demo</a>
+          </div>
+        </div>
+      </section>
+
+      {/* FEEDBACK FORM */}
+      <section id="feedback" className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-10">
+        <h2 className="text-2xl font-bold">2‑minute feedback form</h2>
+        <p className="text-sm text-slate-600 mt-1">Your input directly shapes our roadmap. No fluff.</p>
+
+        <div className="mt-6 bg-white rounded-2xl shadow p-6">
+          {submitted ? (
+            <div className="text-center">
+              <div className="text-lg font-semibold">Thank you! 🎉</div>
+              <p className="text-slate-600 mt-2">We’ll email you an invite to the beta shortly.</p>
+            </div>
+          ) : (
+            <form onSubmit={submit} className="grid gap-5">
+              <div className="grid md:grid-cols-2 gap-4">
+                <label className="grid gap-2">
+                  <span className="text-sm">Name</span>
+                  <input required value={form.name} onChange={(e)=>setForm({...form, name:e.target.value})} className="px-3 py-2 rounded-xl border" placeholder="Jane Doe" />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm">Work email</span>
+                  <input type="email" required value={form.email} onChange={(e)=>setForm({...form, email:e.target.value})} className="px-3 py-2 rounded-xl border" placeholder="jane@company.com" />
+                </label>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4">
+                <label className="grid gap-2">
+                  <span className="text-sm">Role</span>
+                  <select value={form.role} onChange={(e)=>setForm({...form, role:e.target.value})} className="px-3 py-2 rounded-xl border">
+                    <option>SDR/BDR</option>
+                    <option>AE (Outbound-heavy)</option>
+                    <option>Sales Leader</option>
+                    <option>RevOps</option>
+                    <option>Founder</option>
+                  </select>
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm">Pain score (1–10)</span>
+                  <input type="number" min={1} max={10} value={form.painScore} onChange={(e)=>setForm({...form, painScore:Number(e.target.value)})} className="px-3 py-2 rounded-xl border" />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm">Use weekly?</span>
+                  <select value={form.usageLikelihood} onChange={(e)=>setForm({...form, usageLikelihood:e.target.value})} className="px-3 py-2 rounded-xl border">
+                    <option>Very likely</option>
+                    <option>Somewhat likely</option>
+                    <option>Not likely</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="grid gap-2">
+                <span className="text-sm">Biggest challenge in personalizing outreach</span>
+                <textarea required value={form.challenge} onChange={(e)=>setForm({...form, challenge:e.target.value})} className="px-3 py-2 rounded-xl border min-h-[90px]" placeholder="Where does it break today?" />
+              </label>
+
+              <fieldset className="grid gap-3">
+                <legend className="text-sm font-medium">Most valuable features (pick up to 2)</legend>
+                <div className="grid md:grid-cols-2 gap-2">
+                  {[
+                    "Automated prospect research",
+                    "Pain‑point detection using AI",
+                    "Ready‑to‑send personalized emails",
+                    "LinkedIn message / call scripts",
+                    "CRM integration",
+                  ].map((opt) => (
+                    <label key={opt} className="flex items-center gap-2">
+                      <input type="checkbox" checked={form.features.includes(opt)} onChange={()=>toggleFeature(opt)} />
+                      <span className="text-sm">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              <label className="grid gap-2">
+                <span className="text-sm">Fair monthly price if it works as promised</span>
+                <input value={form.price} onChange={(e)=>setForm({...form, price:e.target.value})} className="px-3 py-2 rounded-xl border" placeholder="₹1500 / ₹3000 / ₹5000 / Other" />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm">Anything else we should know?</span>
+                <textarea value={form.notes} onChange={(e)=>setForm({...form, notes:e.target.value})} className="px-3 py-2 rounded-xl border min-h-[80px]" placeholder="Use cases, integrations, deal sizes, etc." />
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.consent} onChange={(e)=>setForm({...form, consent:e.target.checked})} />
+                I agree to be contacted about beta access & product updates. We respect your privacy.
+              </label>
+
+              {error && <div className="text-sm text-red-600">{error}</div>}
+
+              <div className="flex gap-3">
+                <button disabled={loading} className="px-4 py-2 rounded-xl bg-slate-900 text-white disabled:opacity-50">
+                  {loading ? "Submitting..." : "Submit feedback"}
+                </button>
+                <a href={CALENDLY_URL} target="_blank" className="px-4 py-2 rounded-xl border">Or book a demo</a>
+              </div>
+            </form>
+          )}
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 text-sm text-slate-500">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          <div>© {new Date().getFullYear()} neurospear.ai • All rights reserved.</div>
+          <div className="flex gap-4">
+            <a className="hover:underline" href="#">Privacy</a>
+            <a className="hover:underline" href="#">Terms</a>
+            <a className="hover:underline" href="#">Security</a>
+          </div>
+        </div>
+      </footer>
+
+      {/* MODAL for quick access (optional) */}
+      {openForm && (
+        <div className="fixed inset-0 bg-black/40 grid place-items-center p-4 z-50" onClick={() => setOpenForm(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full" onClick={(e)=>e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-lg font-semibold">Join the private beta</div>
+              <button onClick={() => setOpenForm(false)} className="text-slate-500">✕</button>
+            </div>
+            <p className="text-sm text-slate-600 mb-4">Leave your email and we’ll send the invite. You can also book time instantly.</p>
+            <form onSubmit={submit} className="grid gap-3">
+              <input required value={form.name} onChange={(e)=>setForm({...form, name:e.target.value})} className="px-3 py-2 rounded-xl border" placeholder="Your name" />
+              <input type="email" required value={form.email} onChange={(e)=>setForm({...form, email:e.target.value})} className="px-3 py-2 rounded-xl border" placeholder="Work email" />
+              <div className="flex gap-3">
+                <button disabled={loading} className="px-4 py-2 rounded-xl bg-slate-900 text-white disabled:opacity-50">{loading?"Submitting...":"Request access"}</button>
+                <a href={CALENDLY_URL} target="_blank" className="px-4 py-2 rounded-xl border">Book a demo</a>
+              </div>
+              {error && <div className="text-sm text-red-600">{error}</div>}
+              {submitted && <div className="text-sm text-green-700">Thanks! We’ll be in touch soon.</div>}
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
